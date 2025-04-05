@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click Counter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      display: flex;
+      overflow: hidden;
+    }
+    main {
+      flex: 1;
+      text-align: center;
+      padding: 20px;
+    }
+    aside {
+      width: 275px; /* Reduced width by 25px */
+      background-color: #fff;
+      border-left: 2px solid #ddd;
+      padding: 20px;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+    #powerUps {
+      max-height: 85%; /* Limits height of the power-up menu */
+      overflow-y: auto; /* Keeps scrolling behavior */
+      padding: 10px; /* Adds space for hover effects */
+      box-sizing: border-box; /* Ensures padding doesn't affect layout */
+    }
+    h1 {
+      margin-top: 50px;
+      color: #333;
+    }
+    #counter {
+      font-size: 3rem;
+      margin: 20px 0;
+      color: #007bff;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+    #counter.pop {
+      transform: scale(1.2);
+      color: #ff5722;
+    }
+
+    /* Button Animations */
+    button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.1); /* Slightly enlarge the button on hover */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+    }
+    button:active {
+      transform: scale(0.95); /* Slightly shrink the button on click */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Reduce shadow on click */
+    }
+
+    #reset {
+      margin-top: 20px;
+      background-color: #dc3545;
+    }
+    #reset:hover {
+      background-color: #a71d2a;
+    }
+
+    /* Power-Up Button Animations */
+    .power-up {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .power-up:hover {
+      background-color: #e9e9e9;
+      transform: scale(1.05); /* Slightly enlarge the power-up on hover */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+    }
+    .power-up:active {
+      transform: scale(0.95); /* Slightly shrink the power-up on click */
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Reduce shadow on click */
+    }
+    .power-up.disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Toast Notification Styles */
+    #toast {
+      display: none; /* Hidden by default */
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      border-radius: 5px;
+      z-index: 1000;
+      text-align: center;
+    }
+    #toast button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #toast .yes {
+      background-color: #28a745;
+      color: #fff;
+    }
+    #toast .yes:hover {
+      background-color: #218838;
+    }
+    #toast .no {
+      background-color: #dc3545;
+      color: #fff;
+    }
+    #toast .no:hover {
+      background-color: #a71d2a;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Click Counter Game</h1>
+    <div id="counter">0</div>
+    <button id="clickButton">Click Me!</button>
+    <button id="reset">Reset</button>
+  </main>
+  <aside id="powerUpMenu">
+    <h2>Power-Ups</h2>
+    <div id="powerUps">
+      <div class="power-up" data-cost="50" id="doubleClick">Double Click (50 clicks)</div>
+      <div class="power-up" data-cost="100" id="tripleClick">Triple Click (100 clicks)</div>
+      <div class="power-up" data-cost="200" id="autoClick">Auto Click (200 clicks)</div>
+      <div class="power-up" data-cost="300" id="quadrupleClick">Quadruple Click (300 clicks)</div>
+      <div class="power-up" data-cost="500" id="megaClick">Mega Click (500 clicks)</div>
+      <div class="power-up" data-cost="750" id="ultraClick">Ultra Click (750 clicks)</div>
+      <div class="power-up" data-cost="1000" id="hyperClick">Hyper Click (1000 clicks)</div>
+      <div class="power-up" data-cost="1500" id="superAutoClick">Super Auto Click (1500 clicks)</div>
+      <div class="power-up" data-cost="2000" id="clickStorm">Click Storm (2000 clicks)</div>
+      <div class="power-up" data-cost="3000" id="clickMultiplier">Click Multiplier x10 (3000 clicks)</div>
+      <!-- Additional Power-Ups -->
+      <div class="power-up" data-cost="4000" id="stormClick">Storm Click (4000 clicks)</div>
+      <div class="power-up" data-cost="5000" id="ultraMultiplier">Ultra Multiplier x20 (5000 clicks)</div>
+      <div class="power-up" data-cost="6000" id="autoStorm">Auto Storm (6000 clicks)</div>
+      <div class="power-up" data-cost="7000" id="megaBoost">Mega Boost (7000 clicks)</div>
+      <div class="power-up" data-cost="8000" id="hyperBoost">Hyper Boost (8000 clicks)</div>
+      <div class="power-up" data-cost="9000" id="stormMultiplier">Storm Multiplier x50 (9000 clicks)</div>
+      <div class="power-up" data-cost="10000" id="clickFrenzy">Click Frenzy (10000 clicks)</div>
+      <div class="power-up" data-cost="15000" id="autoFrenzy">Auto Frenzy (15000 clicks)</div>
+      <div class="power-up" data-cost="25000" id="ultimateClick">Ultimate Click (25000 clicks)</div>
+      <div class="power-up" data-cost="30000" id="doubleStorm">Double Storm (30000 clicks)</div>
+      <div class="power-up" data-cost="35000" id="megaFrenzy">Mega Frenzy (35000 clicks)</div>
+      <div class="power-up" data-cost="40000" id="autoBoost">Auto Boost (40000 clicks)</div>
+      <div class="power-up" data-cost="45000" id="stormSurge">Storm Surge (45000 clicks)</div>
+      <div class="power-up" data-cost="50000" id="hyperSurge">Hyper Surge (50000 clicks)</div>
+      <div class="power-up" data-cost="60000" id="clickAvalanche">Click Avalanche (60000 clicks)</div>
+      <div class="power-up" data-cost="70000" id="autoAvalanche">Auto Avalanche (70000 clicks)</div>
+      <div class="power-up" data-cost="80000" id="megaMultiplier">Mega Multiplier (80000 clicks)</div>
+      <div class="power-up" data-cost="90000" id="boostFrenzy">Boost Frenzy (90000 clicks)</div>
+      <div class="power-up" data-cost="100000" id="ultimateSurge">Ultimate Surge (100000 clicks)</div>
+    </div>
+  </aside>
+
+  <!-- Toast Notification -->
+  <div id="toast">
+    <p>Are you sure you want to reset?</p>
+    <button class="yes">Yes</button>
+    <button class="no">No</button>
+  </div>
+
+  <script>
+    let count = 0;
+    let multiplier = 1;
+    let autoClickInterval = null;
+
+    const counterDisplay = document.getElementById('counter');
+    const clickButton = document.getElementById('clickButton');
+    const resetButton = document.getElementById('reset');
+    const powerUps = document.getElementById('powerUps');
+    const toast = document.getElementById('toast');
+    const yesButton = toast.querySelector('.yes');
+    const noButton = toast.querySelector('.no');
+
+    clickButton.addEventListener('click', () => {
+      count += multiplier;
+      counterDisplay.textContent = count;
+
+      // Add animation class
+      counterDisplay.classList.add('pop');
+      setTimeout(() => {
+        counterDisplay.classList.remove('pop');
+      }, 200); // Match the duration of the CSS transition
+    });
+
+    resetButton.addEventListener('click', () => {
+      // Show the toast notification
+      toast.style.display = 'block';
+    });
+
+    yesButton.addEventListener('click', () => {
+      // Perform the reset
+      count = 0;
+      multiplier = 1;
+      counterDisplay.textContent = count;
+
+      // Reset power-ups
+      document.querySelectorAll('.power-up').forEach(powerUp => {
+        powerUp.classList.remove('disabled');
+        powerUp.setAttribute('aria-disabled', 'false');
+      });
+
+      // Clear auto-click interval
+      if (autoClickInterval) {
+        clearInterval(autoClickInterval);
+        autoClickInterval = null;
+      }
+
+      // Hide the toast notification
+      toast.style.display = 'none';
+    });
+
+    noButton.addEventListener('click', () => {
+      // Hide the toast notification without resetting
+      toast.style.display = 'none';
+    });
+
+    powerUps.addEventListener('click', (event) => {
+      const powerUp = event.target;
+      if (powerUp.classList.contains('power-up') && !powerUp.classList.contains('disabled')) {
+        const cost = parseInt(powerUp.getAttribute('data-cost'), 10);
+
+        if (count < cost) {
+          alert('Not enough clicks to purchase this power-up!');
+          return;
+        }
+
+        count -= cost;
+        counterDisplay.textContent = count;
+
+        switch (powerUp.id) {
+          case 'doubleClick':
+            multiplier = 2;
+            break;
+          case 'tripleClick':
+            multiplier = 3;
+            break;
+          case 'autoClick': // Fixed Auto Click logic
+            if (autoClickInterval) {
+              clearInterval(autoClickInterval);
+            }
+            autoClickInterval = setInterval(() => {
+              count += multiplier;
+              counterDisplay.textContent = count;
+            }, 1000); // Click every 1 second
+            break;
+          case 'quadrupleClick':
+            multiplier = 4;
+            break;
+          case 'megaClick':
+            multiplier = 5;
+            break;
+          case 'ultraClick':
+            multiplier = 10;
+            break;
+          case 'hyperClick':
+            multiplier = 20;
+            break;
+          case 'superAutoClick':
+            if (autoClickInterval) {
+              clearInterval(autoClickInterval);
+            }
+            autoClickInterval = setInterval(() => {
+              count += multiplier;
+              counterDisplay.textContent = count;
+            }, 500); // Faster auto-click
+            break;
+          case 'clickStorm':
+            for (let i = 0; i < 100; i++) {
+              count += multiplier;
+            }
+            counterDisplay.textContent = count;
+            break;
+          case 'clickMultiplier':
+            multiplier *= 10;
+            break;
+          case 'stormClick':
+            multiplier *= 2;
+            break;
+          case 'ultraMultiplier':
+            multiplier *= 20;
+            break;
+          case 'autoStorm':
+            if (!autoClickInterval) {
+              autoClickInterval = setInterval(() => {
+                count += multiplier * 2;
+                counterDisplay.textContent = count;
+              }, 500);
+            }
+            break;
+          case 'megaBoost':
+            multiplier += 50;
+            break;
+          case 'hyperBoost':
+            multiplier += 100;
+            break;
+          case 'stormMultiplier':
+            multiplier *= 50;
+            break;
+          case 'clickFrenzy':
+            for (let i = 0; i < 500; i++) {
+              count += multiplier;
+            }
+            counterDisplay.textContent = count;
+            break;
+          case 'autoFrenzy':
+            if (!autoClickInterval) {
+              autoClickInterval = setInterval(() => {
+                count += multiplier * 5;
+                counterDisplay.textContent = count;
+              }, 200);
+            }
+            break;
+          case 'ultimateClick':
+            multiplier *= 100;
+            break;
+          case 'doubleStorm':
+            multiplier *= 2;
+            break;
+          case 'megaFrenzy':
+            for (let i = 0; i < 1000; i++) {
+              count += multiplier;
+            }
+            counterDisplay.textContent = count;
+            break;
+          case 'autoBoost':
+            if (!autoClickInterval) {
+              autoClickInterval = setInterval(() => {
+                count += multiplier * 10;
+                counterDisplay.textContent = count;
+              }, 200);
+            }
+            break;
+          case 'stormSurge':
+            multiplier *= 5;
+            break;
+          case 'hyperSurge':
+            multiplier += 500;
+            break;
+          case 'clickAvalanche':
+            for (let i = 0; i < 5000; i++) {
+              count += multiplier;
+            }
+            counterDisplay.textContent = count;
+            break;
+          case 'autoAvalanche':
+            if (!autoClickInterval) {
+              autoClickInterval = setInterval(() => {
+                count += multiplier * 20;
+                counterDisplay.textContent = count;
+              }, 100);
+            }
+            break;
+          case 'megaMultiplier':
+            multiplier *= 100;
+            break;
+          case 'boostFrenzy':
+            multiplier += 1000;
+            break;
+          case 'ultimateSurge':
+            multiplier *= 500;
+            break;
+        }
+
+        // Disable the power-up after purchase
+        powerUp.classList.add('disabled');
+        powerUp.setAttribute('aria-disabled', 'true');
+      }
+    });
+  </script>
+</body>
+</html>
